@@ -7,7 +7,7 @@ use Exception;
 
 class Utils {
 
-    public function generateRandomString($lenght = 13, $hex = false) {
+    public static function generateRandomString($lenght = 13, $hex = false) {
         $str = null;
         $character = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -20,7 +20,7 @@ class Utils {
         return $hex ? bin2hex($str) : $str;
     }
 
-    public function generateCode($lenght = 4) {
+    public static function generateCode($lenght = 4) {
         $str = null;
         $character = '1234567890';
 
@@ -31,7 +31,7 @@ class Utils {
         return $str;
     }
 
-    public function token() {
+    public static function token() {
         $headers = getallheaders();
 
         if (isset($headers['authorization'])) {
@@ -55,12 +55,12 @@ class Utils {
             }
 
             return $returnArray;
-        } else {
-            throw new Exception('Header Authorization not found.', 400);
         }
+
+        throw new Exception('Header Authorization not found.', 400);
     }
 
-    public function sendMail($to, $subject, $body) {
+    public static function sendMail($to, $subject, $body) {
         if (App::$config['env'] == 'dev') {
             file_put_contents("mail/" . date('Ymd_His') . ".eml", "Subject: {$subject}\nFrom: Trusters Group <noreply@trusters.cmsagency.com.es>\nTo: {$to}\nMIME-Version: 1.0\nContent-Type: text/html; charset=utf-8\nContent-Transfer-Encoding: quoted-printable\n\n{$body}");
             return true;
@@ -69,19 +69,19 @@ class Utils {
         }
     }
 
-    public function generateAvatar($character) {
-        $rs = $this->generateRandomString();
+    public static function generateAvatar($character) {
+        $rs = self::generateRandomString();
         $path = 'media' . DIRECTORY_SEPARATOR . $character . $rs . '_' . time() . ".png";
 
-        $width = 200;
-        $height = 200;
-        $text_size = 100;
+        $width = 500;
+        $height = 500;
+        $text_size = 10;
 
         $image = imagecreate($width, $height);
 
-        $red = rand(0, 200);
-        $green = rand(0, 200);
-        $blue = rand(0, 200);
+        $red = rand(50, 200);
+        $green = rand(50, 200);
+        $blue = rand(50, 200);
 
         imagecolorallocate($image, $red, $green, $blue);
 
@@ -91,13 +91,9 @@ class Utils {
 
         $bbox = imagettfbbox($text_size, 0, $font, strtoupper($character));
 
-        //        $lowerleftX = $bbox[0];
-        //        $lowerleftY = $bbox[1];
         $lowerrightX = $bbox[2];
-        //        $lowerrightY = $bbox[3];
         $upperrightX = $bbox[4];
         $upperrightY = $bbox[5];
-        //        $upperleftX = $bbox[6];
         $upperleftY = $bbox[7];
 
         $text_width = abs(max($lowerrightX, $upperrightX));
@@ -114,7 +110,7 @@ class Utils {
         return $path;
     }
 
-    public function resizeImage($avatar, $fn, $type, $width = 100, $height = 100) {
+    public static function resizeImage($avatar, $fn, $type, $width = 100, $height = 100) {
         switch ($type) {
             case 'bmp':
                 $img = imagecreatefromwbmp($avatar);

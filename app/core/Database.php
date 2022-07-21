@@ -29,16 +29,11 @@ class Database {
     }
 
     private function setChar($charset) {
-        $sql = "SET NAMES " . $charset;
-        $this->query($sql);
+        $this->query("SET NAMES " . $charset);
     }
 
     public function query($resource) {
-        $result = mysqli_query($this->connection, $resource);
-        if (!$result) {
-            throw new Exception("SQL Error: " . mysqli_error($this->connection), 500);
-        }
-        return $result;
+        return mysqli_query($this->connection, $resource);
     }
 
     public function uniquequery($resource) {

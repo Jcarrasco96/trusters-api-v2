@@ -32,11 +32,34 @@ if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
 
 $app = new app\core\App($config);
 
-//$app->get('/^auth\/index$/', 'index');
-
+// auth
 $app->post('/^auth\/login$/', 'login');
 $app->post('/^auth\/register$/', 'register');
+$app->post('/^auth\/logout$/', 'logout');
 
-$app->get('/^user\/index$/', 'index');
+// posts
+$app->get('/^posts$/', 'index');
+$app->get('/^posts\/[0-9]+$/', 'view');
+$app->get('/^posts\/owner$/', 'owner');
+$app->get('/^posts\/[0-9]+\/comments$/', 'comments');
+$app->post('/^posts$/', 'create');
+$app->post('/^posts\/[0-9]+\/comments$/', 'comment');
+//$app->put('/^posts\/[0-9]+$/', 'update');
+$app->delete('/^posts\/[0-9]+$/', 'delete');
+
+// user
+$app->get('/^user$/', 'index');
+$app->get('/^user\/current$/', 'current');
+$app->get('/^user\/generate-avatar$/', 'generate-avatar');
+//$app->post('/^user$/', 'create');
+$app->post('/^user\/[0-9]+\/activate$/', 'activate');
+$app->post('/^user\/[0-9]+\/desactivate$/', 'desactivate');
+$app->post('/^user\/avatar$/', 'avatar');
+$app->post('/^user\/wallet$/', 'wallet');
+$app->post('/^user\/change-password$/', 'change-password');
+$app->post('/^user\/[0-9]+\/set-role$/', 'set-role');
+$app->post('/^user\/send-code$/', 'send-code');
+$app->post('/^user\/verify$/', 'verify');
+//$app->put('/^user$/', 'update');
 
 $app->run();

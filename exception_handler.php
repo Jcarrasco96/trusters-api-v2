@@ -16,7 +16,7 @@ function exception_handler($exception) {
     echo json_encode([
         'status' => $exception->getCode() == 0 ? 401 : $exception->getCode(),
         'message' => $exception->getMessage(),
-        'trace' => str_replace($_SERVER['DOCUMENT_ROOT'], '.', htmlspecialchars($exception->getTraceAsString())),
+        'trace' => $exception->getTraceAsString(),
     ]);
     exit;
 }

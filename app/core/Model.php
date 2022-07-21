@@ -14,4 +14,12 @@ class Model {
         $this->db = null;
     }
 
+    protected function getName($record) {
+        if (empty($record['name']) && empty($record['last_name'])) {
+            return $record['username'];
+        } else {
+            return trim("{$record['name']} {$record['last_name']}");
+        }
+    }
+
 }

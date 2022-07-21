@@ -12,5 +12,7 @@ Thumbs.db
 
 # my
 /error
+/mail
+/media
 
 *.sql
