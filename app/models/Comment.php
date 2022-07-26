@@ -11,10 +11,10 @@ class Comment extends Model {
         $offset = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $offset = ($offset - 1) * $page_size;
 
-        $count = $this->db->countquery(sprintf("SELECT count(*) as count FROM comment WHERE post_id = %u", $this->db->sql_escape($id)));
+        $count = $this->db->count_query(sprintf("SELECT count(*) as count FROM comment WHERE post_id = %u", $this->db->sql_escape($id)));
 
         $sql = sprintf("SELECT comment.id, comment.content, comment.post_id, user.id as 'user_id', user.username, user.name, user.last_name, user.email, user.is_verified, user.phone, user.avatar FROM comment, user WHERE post_id = %u AND comment.user_id = user.id LIMIT %u, %u", $this->db->sql_escape($id), $offset, $page_size);
-        $comments = $this->db->fetchquery($sql);
+        $comments = $this->db->fetch_query($sql);
 
         foreach ($comments as $key => $value) {
             $comments[$key]['name'] = $this->getName($value);

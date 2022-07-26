@@ -45,8 +45,8 @@ class UserController extends Controller {
         $sqlCountPosts = sprintf("SELECT count(*) AS COUNT FROM post WHERE user_id = %u", $db->sql_escape($token['id']));
         $sqlCountComments = sprintf("SELECT count(*) AS COUNT FROM post INNER JOIN comment ON post.id = comment.post_id AND post.user_id = %u", $db->sql_escape($token['id']));
 
-        $user['posts'] = $db->countquery($sqlCountPosts);
-        $user['comments'] = $db->countquery($sqlCountComments);
+        $user['posts'] = $db->count_query($sqlCountPosts);
+        $user['comments'] = $db->count_query($sqlCountComments);
 
         return $user;
     }

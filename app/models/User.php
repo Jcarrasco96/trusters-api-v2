@@ -9,11 +9,11 @@ use Exception;
 class User extends Model {
 
     public function users($page_size, $offset) {
-        $count = $this->db->countquery("SELECT count(*) as count FROM user");
+        $count = $this->db->count_query("SELECT count(*) as count FROM user");
         $sql = sprintf("SELECT id, username, name, last_name, email, auth, is_active, is_verified, ci, sex, birthdate, country, phone, address, avatar, ti_wallet FROM user ORDER BY username DESC LIMIT %u, %u", $offset, $page_size);
 
         return [
-            $this->db->fetchquery($sql),
+            $this->db->fetch_query($sql),
             $count
         ];
     }
@@ -21,7 +21,7 @@ class User extends Model {
     public function findUserByCredentials($username, $password) {
         $sql = sprintf("SELECT id, username, password, unique_hash, auth FROM user WHERE username = '%s'", $this->db->sql_escape($username));
 //        $sql = sprintf("SELECT * FROM user WHERE username = '%s' AND is_active = 1", $this->db->sql_escape($username));
-        $data = $this->db->uniquequery($sql);
+        $data = $this->db->unique_query($sql);
 
         if ($data && password_verify($password, $data["password"])) {
             return $data;
@@ -50,7 +50,7 @@ class User extends Model {
             $sqlUser = sprintf("SELECT * FROM user WHERE id = %u", $this->db->sql_escape($id));
         }
 
-        $user = $this->db->uniquequery($sqlUser);
+        $user = $this->db->unique_query($sqlUser);
 
         if ($user) {
             return $user;
@@ -84,7 +84,7 @@ class User extends Model {
 
     public function changePassword($old_password, $password, $id, $username, $unique_hash) {
         $sqlUser = sprintf("SELECT password FROM user WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $this->db->sql_escape($id), $this->db->sql_escape($username), $this->db->sql_escape($unique_hash));
-        $user = $this->db->uniquequery($sqlUser);
+        $user = $this->db->unique_query($sqlUser);
 
         if (!password_verify($old_password, $user['password'])) {
             throw new Exception("Contraseña actual no coincide.", 400);

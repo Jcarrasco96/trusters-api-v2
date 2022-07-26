@@ -19,7 +19,7 @@ class Database {
         $charset = $databaseConfig['charset'];
 
         $this->connection = mysqli_connect($host, $user, $password, $dbname, $port);
-        $this->setChar($charset);
+        $this->set_char($charset);
     }
 
     public function __destruct() {
@@ -28,7 +28,7 @@ class Database {
         }
     }
 
-    private function setChar($charset) {
+    private function set_char($charset) {
         $this->query("SET NAMES " . $charset);
     }
 
@@ -36,21 +36,21 @@ class Database {
         return mysqli_query($this->connection, $resource);
     }
 
-    public function uniquequery($resource) {
+    public function unique_query($resource) {
         $result = $this->query($resource);
         $Return = $result->fetch_array(MYSQLI_ASSOC);
         $result->close();
         return $Return;
     }
 
-    public function countquery($resource) {
+    public function count_query($resource) {
         $result = $this->query($resource);
         list($Return) = $result->fetch_array(MYSQLI_NUM);
         $result->close();
         return $Return;
     }
 
-    public function fetchquery($resource, $encode = []) {
+    public function fetch_query($resource, $encode = []) {
         $result = $this->query($resource);
         $Return = [];
         while ($Data = $result->fetch_array(MYSQLI_ASSOC)) {
@@ -77,24 +77,12 @@ class Database {
         return $query->num_rows;
     }
 
-    public function GetInsertID() {
+    public function insert_id() {
         return $this->connection->insert_id;
     }
 
     public function sql_escape($string, $flag = false) {
         return ($flag === false) ? mysqli_real_escape_string($this->connection, $string) : addcslashes(mysqli_real_escape_string($this->connection, $string), '%_');
-    }
-
-    public function str_correction($str) {
-        return stripcslashes($str);
-    }
-
-    public function getVersion() {
-        return mysqli_get_client_info();
-    }
-
-    public function getServerVersion() {
-        return $this->connection->server_info;
     }
 
     public function free_result($resource) {
