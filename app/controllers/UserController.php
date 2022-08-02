@@ -2,7 +2,6 @@
 
 namespace app\controllers;
 
-use app\core\App;
 use app\core\Controller;
 use app\core\Database;
 use app\core\Utils;
@@ -260,6 +259,31 @@ class UserController extends Controller {
         }
 
         throw new Exception("El usuario no ha solicitado validar su cuenta.", 400);
+    }
+
+    public function update() {
+        $model = new User();
+        $token = Utils::token();
+
+        Validators::validateIsSet("Verifique los datos del afiliado tengan formato correcto", $this->dataJson, 'name', 'last_name', 'email', 'phone', 'country', 'address', 'birthdate', 'ci', 'sex');
+        Validators::validateSex($this->dataJson['sex']);
+        Validators::validateEmail($this->dataJson['email']);
+
+        $rows = $model->update($this->dataJson['name'], $this->dataJson['last_name'], $this->dataJson['email'], $this->dataJson['phone'], $this->dataJson['country'], $this->dataJson['address'], $this->dataJson['birthdate'], $this->dataJson['ci'], $this->dataJson['sex'], $token['id'], $token['username'], $token['unique_hash']);
+
+        if ($rows == 1) {
+            return [
+                'status' => 200,
+                'message' => 'Perfil modificado correctamente'
+            ];
+        } elseif ($rows == 0) {
+            return [
+                'status' => 200,
+                'message' => 'No hay cambios de datos en el perfil'
+            ];
+        }
+
+        throw new Exception('Error en la base de datos', 500);
     }
 
 }

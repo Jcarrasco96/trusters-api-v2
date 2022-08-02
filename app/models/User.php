@@ -19,23 +19,39 @@ class User extends Model {
     }
 
     public function findUserByCredentials($username, $password) {
-        $sql = sprintf("SELECT id, username, password, unique_hash, auth FROM user WHERE username = '%s'", $this->db->sql_escape($username));
+        $sql = sprintf("SELECT id, username, password FROM user WHERE username = '%s'", $this->db->sql_escape($username));
 //        $sql = sprintf("SELECT * FROM user WHERE username = '%s' AND is_active = 1", $this->db->sql_escape($username));
         $data = $this->db->unique_query($sql);
 
         if ($data && password_verify($password, $data["password"])) {
-            return $data;
-        } else {
-            return null;
+            return $data['id'];
         }
+
+        return null;
     }
 
     public function create($username, $password, $email) {
         $hashPassword = password_hash($password, PASSWORD_BCRYPT); // Encriptar contraseña
-        $unique_hash = Utils::generateRandomString(); // Generar unique_hash
 
-        $sql = sprintf("INSERT INTO user (username, email, password, unique_hash) VALUES ('%s','%s','%s','%s')", $this->db->sql_escape($username), $this->db->sql_escape($email), $this->db->sql_escape($hashPassword), $this->db->sql_escape($unique_hash));
+        $sql = sprintf("INSERT INTO user (username, email, password) VALUES ('%s','%s','%s')", $this->db->sql_escape($username), $this->db->sql_escape($email), $this->db->sql_escape($hashPassword));
         $this->db->query($sql);
+        return $this->db->affected_rows();
+    }
+
+    public function update($name, $last_name, $email, $phone, $country, $address, $birthdate, $ci, $sex, $id, $username, $unique_hash) {
+        $sqlUser = sprintf("SELECT * FROM user WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $this->db->sql_escape($id), $this->db->sql_escape($username), $this->db->sql_escape($unique_hash));
+        $user = $this->db->unique_query($sqlUser);
+
+        if (!$user) {
+            throw new Exception("Verifique los datos del perfil", 400);
+        }
+
+        $is_verified = $user['email'] == $email && $user['is_verified'] == 1 ? 1 : 0;
+
+        $sql = sprintf("UPDATE user SET name = '%s', last_name = '%s', email = '%s', is_verified = %u, phone = '%s', country = '%s', address = '%s', birthdate = '%s', ci = '%s', sex = '%s' WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $this->db->sql_escape($name), $this->db->sql_escape($last_name), $this->db->sql_escape($email), $is_verified, $this->db->sql_escape($phone), $this->db->sql_escape($country), $this->db->sql_escape($address), $this->db->sql_escape($birthdate), $this->db->sql_escape($ci), $this->db->sql_escape($sex), $this->db->sql_escape($id), $this->db->sql_escape($username), $this->db->sql_escape($unique_hash));
+
+        $this->db->query($sql);
+
         return $this->db->affected_rows();
     }
 
@@ -132,6 +148,22 @@ class User extends Model {
         }
 
         throw new Exception("El codigo no es correcto.", 400);
+    }
+
+    public function login($id) {
+        $hash = Utils::generateRandomString();
+
+        $sqlUpdateHash = sprintf("UPDATE user SET unique_hash = '%s' WHERE id = %u AND unique_hash IS NULL", $hash, $this->db->sql_escape($id));
+        $this->db->query($sqlUpdateHash);
+
+        $sqlUser = sprintf("SELECT id, username, password, unique_hash, auth FROM user WHERE id = %u", $id);
+        return $this->db->unique_query($sqlUser);
+    }
+
+    public function logout($id, $username, $unique_hash) {
+        $sql = sprintf("UPDATE user SET unique_hash = NULL WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $this->db->sql_escape($id), $this->db->sql_escape($username), $this->db->sql_escape($unique_hash));
+        $this->db->query($sql);
+        return $this->db->affected_rows() > 0;
     }
 
 }

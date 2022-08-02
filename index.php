@@ -14,7 +14,7 @@ require_once 'exception_handler.php';
 
 set_exception_handler('exception_handler');
 
-$requestHeaders = getallheaders();
+$requestHeaders = array_change_key_case(getallheaders(), CASE_LOWER);
 if (isset($requestHeaders['Origin'])) {
     if (in_array($requestHeaders['Origin'], $config['origins'], true)) {
         header('Access-Control-Allow-Origin: ' . $requestHeaders['Origin']);
@@ -60,6 +60,6 @@ $app->post('/^user\/change-password$/', 'change-password');
 $app->post('/^user\/[0-9]+\/set-role$/', 'set-role');
 $app->post('/^user\/send-code$/', 'send-code');
 $app->post('/^user\/verify$/', 'verify');
-//$app->put('/^user$/', 'update');
+$app->put('/^user$/', 'update');
 
 $app->run();

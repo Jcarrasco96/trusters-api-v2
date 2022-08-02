@@ -32,7 +32,7 @@ class Utils {
     }
 
     public static function token() {
-        $headers = getallheaders();
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
 
         if (isset($headers['authorization'])) {
             $token = trim(str_replace('Bearer ', '', $headers['authorization']));
@@ -44,8 +44,8 @@ class Utils {
             }
 
             $returnArray = [
-                'status' => 200,
-                'message' => 'Token correcto',
+//                'status' => 200,
+//                'message' => 'Token correcto',
                 'id' => isset($payload->id) ? $payload->id : 0,
                 'username' => isset($payload->username) ? $payload->username : '',
                 'unique_hash' => isset($payload->unique_hash) ? $payload->unique_hash : '',

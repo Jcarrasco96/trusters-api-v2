@@ -54,7 +54,12 @@ class App {
     }
 
     public function run() {
-        self::dispatch();
+        try {
+            self::dispatch();
+        } catch (Exception $e) {
+            http_response_code($e->getCode());
+            echo json_encode(['status' => $e->getCode(), 'message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+        }
     }
 
     public function get($regex, $action) {

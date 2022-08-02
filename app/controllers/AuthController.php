@@ -4,7 +4,6 @@ namespace app\controllers;
 
 use app\core\App;
 use app\core\Controller;
-use app\core\Database;
 use app\core\JWT;
 use app\core\Utils;
 use app\core\Validators;
@@ -16,35 +15,31 @@ class AuthController extends Controller {
     public function login() {
         $model = new User();
 
-        Validators::validateIsSet("Las credenciales del afiliado deben estar definidas correctamente", $this->dataJson, 'username', 'password');
+        Validators::validateIsSet("Las credenciales son incorrectas", $this->dataJson, 'username', 'password');
 
-        $dbResult = $model->findUserByCredentials($this->dataJson['username'], $this->dataJson['password']);
+        $id = $model->findUserByCredentials($this->dataJson['username'], $this->dataJson['password']);
 
-        if ($dbResult != null) {
+        if ($id != 0) {
+            $dbResult = $model->login($id);
+
             $payloadArray = [
                 'id'          => $dbResult['id'],
                 'username'    => $dbResult['username'],
                 'unique_hash' => $dbResult['unique_hash'],
-                'auth'        => $dbResult['auth'],
-                //                'nbf' => strtotime('-7 day'),
-                //                'exp' => strtotime("+7 day"),
             ];
+
             $token = JWT::encode($payloadArray, App::$config['jwt']['serverkey']);
 
             return [
-                "status"      => 200,
-                "id"          => $dbResult['id'],
-                "username"    => $dbResult['username'],
-                'unique_hash' => $dbResult['unique_hash'],
-                'auth'        => $dbResult['auth'],
-                "token"       => $token
-            ];
-        } else {
-            return [
-                "status"  => 400,
-                "message" => 'Nombre de usuario o contraseña inválidos',
+                'auth'  => $dbResult['auth'],
+                'token' => $token,
             ];
         }
+
+        return [
+            "status"  => 400,
+            "message" => 'Nombre de usuario o contraseña inválidos',
+        ];
     }
 
     public function register() {
@@ -72,24 +67,19 @@ class AuthController extends Controller {
     }
 
     public function logout() {
+        $model = new User();
         $token = Utils::token();
 
-        $unique_hash = Utils::generateRandomString(); // Generar unique_hash
+        $update = $model->logout($token['id'], $token['username'], $token['unique_hash']);
 
-        $db = new Database();
-        $sql = sprintf("UPDATE user SET unique_hash = '%s' WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $db->sql_escape($unique_hash), $db->sql_escape($token['id']), $db->sql_escape($token['username']), $db->sql_escape($token['unique_hash']));
-
-        $db->query($sql);
-
-        if ($db->affected_rows() > 0) {
+        if ($update) {
             return [
-                'status' => 200,
+                'status'  => 200,
                 'message' => 'Logout'
             ];
-        } else {
-            throw new Exception("No se desautentifico", 400);
         }
 
+        throw new Exception("No se desautentifico", 400);
     }
 
 }

@@ -11,32 +11,17 @@ class Controller {
     public $dataJson;
 
     public function __construct() {
-        // Obtener parámetros de la petición
-        $parameters = file_get_contents('php://input');
+        $parameters = file_get_contents('php://input'); // Obtener parámetros de la petición
 
         if ($parameters) {
             $dParams = json_decode($parameters, true);
 
-            // Controlar posible error de parsing JSON
-            if (json_last_error() != JSON_ERROR_NONE) {
-                throw new Exception("Error interno en el servidor. Contacte al administrador", 500);
+            if (json_last_error() != JSON_ERROR_NONE) { // Controlar posible error de parsing JSON
+                throw new Exception("Error interno en el servidor. Contacte al administrador con este codigo: JSON" . json_last_error(), 500);
             }
 
             $this->dataJson = $dParams;
         }
-    }
-
-    /**
-     * @ - autenticado
-     * * - todos
-     * ? - no autenticado
-     *
-     * @return array
-     */
-    public function behavior() {
-        return [
-            'access' => []
-        ];
     }
 
     public function createAction($methodName, $params = []) {
@@ -54,8 +39,19 @@ class Controller {
     }
 
     private function render($params = []) {
-        $apiView = new JsonView();
-        return $apiView->render($params);
+        if (isset($params["status"])) {
+            http_response_code($params["status"]);
+        }
+
+        header('Content-Type: application/json; charset=utf8');
+
+        $jsonResponse = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            throw new Exception("Error interno en el servidor. Contacte al administrador", 500);
+        }
+
+        return $jsonResponse;
     }
 
     private function normalizeAction($methodName) {

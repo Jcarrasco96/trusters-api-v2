@@ -153,10 +153,10 @@ class JWT {
      * @throws Exception
      */
     public static function encode($payload, $key, $alg = 'HS256', $keyId = null, $head = null) {
-        $header = array(
+        $header = [
             'typ' => 'JWT',
             'alg' => $alg
-        );
+        ];
 
         if ($keyId !== null) {
             $header['kid'] = $keyId;
