@@ -24,7 +24,7 @@ if (isset($requestHeaders['Origin'])) {
 header("Access-Control-Allow-Headers: Origin, Content-Type, Accept, Access-Control-Request-Method");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Allow: GET, POST, OPTIONS, PUT, DELETE");
-header('P3P:CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"');
+//header('P3P:CP="IDC DSP COR ADM DEVi TAIi PSA PSD IVAi IVDi CONi HIS OUR IND CNT"');
 
 if (strtolower($_SERVER['REQUEST_METHOD']) == 'options') {
     die();
@@ -44,6 +44,7 @@ $app->get('/^posts\/owner$/', 'owner');
 $app->get('/^posts\/[0-9]+\/comments$/', 'comments');
 $app->post('/^posts$/', 'create');
 $app->post('/^posts\/[0-9]+\/comments$/', 'comment');
+$app->post('/^posts\/[0-9]+\/report$/', 'report');
 //$app->put('/^posts\/[0-9]+$/', 'update');
 $app->delete('/^posts\/[0-9]+$/', 'delete');
 
@@ -61,5 +62,7 @@ $app->post('/^user\/[0-9]+\/set-role$/', 'set-role');
 $app->post('/^user\/send-code$/', 'send-code');
 $app->post('/^user\/verify$/', 'verify');
 $app->put('/^user$/', 'update');
+
+$app->get('/^test\/index$/', 'index');
 
 $app->run();

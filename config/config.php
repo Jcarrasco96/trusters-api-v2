@@ -8,6 +8,7 @@ return [
     'origins' => [
         'http://localhost',
         'http://127.0.0.1',
+        'http://192.168.56.1',
         'https://trusters.cmsagency.com.es',
     ],
     'db' => [

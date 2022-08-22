@@ -7,6 +7,7 @@ use app\core\Utils;
 use app\core\Validators;
 use app\models\Comment;
 use app\models\Post;
+use app\models\Report;
 use Exception;
 
 class PostsController extends Controller {
@@ -73,7 +74,7 @@ class PostsController extends Controller {
         $token = Utils::token();
 
         Validators::isPoster($token['id'], $token['username'], $token['unique_hash']);
-        Validators::validateIsSet("Verifique los datos del post tengan formato correcto", $this->dataJson, 'content');
+        Validators::validateSet("Verifique los datos del post tengan formato correcto", $this->dataJson, 'content');
 
         return $model->create($this->dataJson['content'], $token['id']);
     }
@@ -83,7 +84,7 @@ class PostsController extends Controller {
         $token = Utils::token();
 
         Validators::isPoster($token['id'], $token['username'], $token['unique_hash']);
-        Validators::validateIsSet("Verifique los datos enviados", $this->dataJson, 'content');
+        Validators::validateSet("Verifique los datos enviados", $this->dataJson, 'content');
         Validators::validateIsNumeric($id);
 
         $rows = $commentModel->create($id, $token['id'], $this->dataJson['content']);
@@ -113,6 +114,26 @@ class PostsController extends Controller {
         }
 
         throw new Exception("Registro no eliminado", 400);
+    }
+
+    public function report($id) {
+        $model = new Report();
+        $token = Utils::token();
+
+        Validators::isPoster($token['id'], $token['username'], $token['unique_hash']);
+        Validators::validateIsNumeric($id);
+
+        if ($model->create($id, $token['id']) == 1) {
+            return [
+                'status' => 200,
+                'message' => 'Publicación reportada a los administradores'
+            ];
+        }
+
+        return [
+            'status' => 200,
+            'message' => 'Ya has reportado esta publicación'
+        ];
     }
 
 }

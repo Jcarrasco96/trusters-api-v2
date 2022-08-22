@@ -16,6 +16,11 @@ class Post extends Model {
             $data[$key]['name'] = $this->getName($value);
             unset($data[$key]['username']);
             unset($data[$key]['last_name']);
+
+            $sql = sprintf("SELECT count(*) as comments FROM comment WHERE comment.post_id = %u", $value['id']);
+            $dataComments = $this->db->count_query($sql);
+
+            $data[$key]['comments'] = $dataComments;
         }
 
         return [

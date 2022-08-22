@@ -166,4 +166,20 @@ class User extends Model {
         return $this->db->affected_rows() > 0;
     }
 
+    public function deleteAvatar($id, $username, $unique_hash) {
+        $sqlUser = sprintf("SELECT id, username, unique_hash, avatar FROM user WHERE id = %u AND username = '%s' AND unique_hash = '%s'", $this->db->sql_escape($id), $this->db->sql_escape($username), $this->db->sql_escape($unique_hash));
+        $user=  $this->db->unique_query($sqlUser);
+
+        if (isset($user['avatar'])) {
+            $avatar = $user['avatar'];
+
+            $avatar500 = str_replace(".png", "_r500.png", $avatar);
+//            $avatar1000 = str_replace(".png", "_r1000.png", $avatar);
+
+            unlink("media/profile/{$avatar}");
+            unlink("media/profile/{$avatar500}");
+//            unlink("media/profile/{$avatar1000}");
+        }
+    }
+
 }

@@ -41,8 +41,8 @@ class UserController extends Controller {
         unset($user['unique_hash']);
         unset($user['clef']);
 
-        $sqlCountPosts = sprintf("SELECT count(*) AS COUNT FROM post WHERE user_id = %u", $db->sql_escape($token['id']));
-        $sqlCountComments = sprintf("SELECT count(*) AS COUNT FROM post INNER JOIN comment ON post.id = comment.post_id AND post.user_id = %u", $db->sql_escape($token['id']));
+        $sqlCountPosts = sprintf('SELECT count(*) AS COUNT FROM post WHERE user_id = %u', $db->sql_escape($token['id']));
+        $sqlCountComments = sprintf('SELECT count(*) AS COUNT FROM post INNER JOIN comment ON post.id = comment.post_id AND post.user_id = %u', $db->sql_escape($token['id']));
 
         $user['posts'] = $db->count_query($sqlCountPosts);
         $user['comments'] = $db->count_query($sqlCountComments);
@@ -54,7 +54,7 @@ class UserController extends Controller {
         //        $model = new User();
         //        $token = Utils::token();
 
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters = 'AOI';//'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         for ($i = 0; $i < strlen($characters); $i++) {
             $path = Utils::generateAvatar($characters[$i]);
         }
@@ -64,8 +64,8 @@ class UserController extends Controller {
 
         $avatars = [
             'o' => $path,
-            //            'r_100_100' => Utils::resizeImage($path, "{$avatar}_r_100_100.{$type}", $type),
-            //            'r_500_500' => Utils::resizeImage($path, "{$avatar}_r_500_500.{$type}", $type, 500, 500),
+            //            'r_100_100' => Utils::resizeImage($path, '{$avatar}_r_100_100.{$type}', $type),
+            //            'r_500_500' => Utils::resizeImage($path, '{$avatar}_r_500_500.{$type}', $type, 500, 500),
         ];
 
         // unlink($avatar_o);
@@ -90,7 +90,7 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("No se pudo activar el usuario, puede que ya se encuentre activo.", 400);
+        throw new Exception('No se pudo activar el usuario, puede que ya se encuentre activo.', 400);
     }
 
     public function desactivate($id) {
@@ -108,7 +108,7 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("No se pudo desactivar el usuario, puede que ya se encuentre inactivo.", 400);
+        throw new Exception('No se pudo desactivar el usuario, puede que ya se encuentre inactivo.', 400);
     }
 
     public function avatar() {
@@ -116,22 +116,25 @@ class UserController extends Controller {
         $token = Utils::token();
 
         if (!isset($_FILES['avatar'])) {
-            throw new Exception("Debe subir un archivo", 400);
+            throw new Exception('Debe subir un archivo', 400);
         }
 
-        $type = strtolower(substr(strrchr($_FILES["avatar"]["type"], "/"), 1));
-        $avatar = Utils::generateRandomString();
+        $type = strtolower(substr(strrchr($_FILES['avatar']['type'], '/'), 1));
+        $avatar = Utils::generateRandomString(4) . '_' .  time();
 
-        $avatar_o = "media/{$avatar}_o.{$type}";
+        $avatar_o = "media/{$avatar}.tmp.{$type}";
 
-        copy($_FILES["avatar"]["tmp_name"], $avatar_o);
+        copy($_FILES['avatar']['tmp_name'], $avatar_o);
 
         $avatars = [
-            'avatar' => Utils::resizeImage($avatar_o, "{$avatar}_r100.{$type}", $type),
-            'r500' => Utils::resizeImage($avatar_o, "{$avatar}_r500.{$type}", $type, 500, 500),
+            'avatar' => Utils::resizeImage($avatar_o, "{$avatar}.png", $type, 100, 100),
+            'r500' => Utils::resizeImage($avatar_o, "{$avatar}_r500.png", $type, 500, 500),
+//            'r1000' => Utils::resizeImage($avatar_o, "{$avatar}_r1000.png", $type, 1000, 1000),
         ];
 
         unlink($avatar_o);
+
+        $model->deleteAvatar($token['id'], $token['username'], $token['unique_hash']);
 
         $rows = $model->setAvatar($avatars['avatar'], $token['id'], $token['username'], $token['unique_hash']);
 
@@ -139,14 +142,14 @@ class UserController extends Controller {
             return $avatars;
         }
 
-        throw new Exception("No se pudo cambiar la foto de perfil.", 400);
+        throw new Exception('No se pudo cambiar la foto de perfil.', 400);
     }
 
     public function wallet() {
         $model = new User();
         $token = Utils::token();
 
-        Validators::validateIsSet("Verifique los datos de la billetera electrónica.", $this->dataJson, 'ti_wallet');
+        Validators::validateSet('Verifique los datos de la billetera electrónica.', $this->dataJson, 'ti_wallet');
 
         $rows = $model->setWallet($this->dataJson['ti_wallet'], $token['id'], $token['username'], $token['unique_hash']);
 
@@ -162,16 +165,16 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("No se pudo cambiar la billetera electrónica.", 400);
+        throw new Exception('No se pudo cambiar la billetera electrónica.', 400);
     }
 
     public function changePassword() {
         $model = new User();
         $token = Utils::token();
 
-        Validators::validateIsSet("Verifique los datos del afiliado tengan formato correcto", $this->dataJson, "old_password", "password", "password2");
-        Validators::validatePasswordMatch($this->dataJson["password"], $this->dataJson["password2"]);
-        Validators::validateNotEmpty($this->dataJson["old_password"], $this->dataJson["password"], $this->dataJson["password2"]);
+        Validators::validateSet('Verifique los datos del afiliado tengan formato correcto', $this->dataJson, 'old_password', 'password', 'password2');
+        Validators::validatePasswordMatch($this->dataJson['password'], $this->dataJson['password2']);
+        Validators::validateNotEmpty($this->dataJson['old_password'], $this->dataJson['password'], $this->dataJson['password2']);
 
         $rows = $model->changePassword($this->dataJson['old_password'], $this->dataJson['password'], $token['id'], $token['username'], $token['unique_hash']);
 
@@ -182,7 +185,7 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("No se pudo cambiar la contraseña.", 400);
+        throw new Exception('No se pudo cambiar la contraseña.', 400);
     }
 
     public function setRole($id) {
@@ -190,7 +193,7 @@ class UserController extends Controller {
         $token = Utils::token();
 
         Validators::isAdmin($token['id'], $token['username'], $token['unique_hash']);
-        Validators::validateIsSet("Error Processing Request", $this->dataJson, 'auth');
+        Validators::validateSet('Error Processing Request', $this->dataJson, 'auth');
         Validators::validateIsNumeric($this->dataJson['auth']);
         Validators::validateRole($this->dataJson['auth']);
 
@@ -203,7 +206,7 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("No se pudo cambiar el rol a este usuario, puede que ya tenga este rol.", 400);
+        throw new Exception('No se pudo cambiar el rol a este usuario, puede que ya tenga este rol.', 400);
     }
 
     public function sendCode() {
@@ -222,7 +225,7 @@ class UserController extends Controller {
         $code = Utils::generateCode(6);
 
         $sendCode = $model->sendCode($code, $token['id'], $token['username'], $token['unique_hash']);
-        $sendMail = Utils::sendMail($user['email'], 'Codigo de verificacion', "El codigo de verificacion del correo {$user['email']} es <h1>{$code}</h1>");
+        $sendMail = Utils::sendMail($user['email'], 'Codigo de verificacion', sprintf("El codigo de verificacion del correo %s es <h1>%s</h1>", $user['email'], $code));
 
         if ($sendCode == 1 && $sendMail) {
             return [
@@ -247,7 +250,7 @@ class UserController extends Controller {
             ];
         }
 
-        Validators::validateIsSet("Usuario no tiene un codigo de verificacion valido.", $user, 'clef');
+        Validators::validateSet('Usuario no tiene un codigo de verificacion valido.', $user, 'clef');
 
         $rows = $model->verify($user['clef'], $this->dataJson['code'], $token['id'], $token['username'], $token['unique_hash']);
 
@@ -258,14 +261,14 @@ class UserController extends Controller {
             ];
         }
 
-        throw new Exception("El usuario no ha solicitado validar su cuenta.", 400);
+        throw new Exception('El usuario no ha solicitado validar su cuenta.', 400);
     }
 
     public function update() {
         $model = new User();
         $token = Utils::token();
 
-        Validators::validateIsSet("Verifique los datos del afiliado tengan formato correcto", $this->dataJson, 'name', 'last_name', 'email', 'phone', 'country', 'address', 'birthdate', 'ci', 'sex');
+        Validators::validateSet('Verifique los datos del afiliado tengan formato correcto', $this->dataJson, 'name', 'last_name', 'email', 'phone', 'country', 'address', 'birthdate', 'ci', 'sex');
         Validators::validateSex($this->dataJson['sex']);
         Validators::validateEmail($this->dataJson['email']);
 

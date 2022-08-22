@@ -1,9 +1,9 @@
 <?php
 
 function exception_handler($exception) {
-    //    if ($_SERVER['SERVER_PROTOCOL'] == 'HTTP/1.1' && !headers_sent()) {
-    //        header('HTTP/1.1 503 Service Unavailable');
-    //    }
+//    if ($_SERVER['SERVER_PROTOCOL'] == 'HTTP/1.1' && !headers_sent()) {
+//        header('HTTP/1.1 503 Service Unavailable');
+//    }
 
     http_response_code($exception->getCode());
 
@@ -14,9 +14,9 @@ function exception_handler($exception) {
     header('Content-Type: application/json; charset=utf8');
 
     echo json_encode([
-        'status' => $exception->getCode() == 0 ? 401 : $exception->getCode(),
+        'status'  => $exception->getCode() == 0 ? 401 : $exception->getCode(),
         'message' => $exception->getMessage(),
-        'trace' => $exception->getTraceAsString(),
+        'trace'   => $exception->getTraceAsString(),
     ]);
     exit;
 }

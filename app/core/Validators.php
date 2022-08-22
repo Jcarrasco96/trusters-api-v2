@@ -31,7 +31,7 @@ class Validators {
         }
     }
 
-    public static function validateIsSet($message, $data, ...$fields) {
+    public static function validateSet($message, $data, ...$fields) {
         foreach ($fields as $field) {
             if (!isset($data[$field])) {
                 throw new Exception($message, 400);

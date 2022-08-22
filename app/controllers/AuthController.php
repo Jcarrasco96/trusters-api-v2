@@ -15,7 +15,7 @@ class AuthController extends Controller {
     public function login() {
         $model = new User();
 
-        Validators::validateIsSet("Las credenciales son incorrectas", $this->dataJson, 'username', 'password');
+        Validators::validateSet("Las credenciales son incorrectas", $this->dataJson, 'username', 'password');
 
         $id = $model->findUserByCredentials($this->dataJson['username'], $this->dataJson['password']);
 
@@ -31,6 +31,7 @@ class AuthController extends Controller {
             $token = JWT::encode($payloadArray, App::$config['jwt']['serverkey']);
 
             return [
+                'id'    => $dbResult['id'],
                 'auth'  => $dbResult['auth'],
                 'token' => $token,
             ];
@@ -38,14 +39,14 @@ class AuthController extends Controller {
 
         return [
             "status"  => 400,
-            "message" => 'Nombre de usuario o contraseña inválidos',
+            "message" => 'Nombre de usuario o contraseña incorrectos',
         ];
     }
 
     public function register() {
         $model = new User();
 
-        Validators::validateIsSet("Verifique los datos", $this->dataJson, "username", "password", "password2", "email");
+        Validators::validateSet("Verifique los datos", $this->dataJson, "username", "password", "password2", "email");
         Validators::validatePasswordMatch($this->dataJson["password"], $this->dataJson["password2"]);
         Validators::validateEmail($this->dataJson['email']);
         Validators::validateUsername($this->dataJson['username']);

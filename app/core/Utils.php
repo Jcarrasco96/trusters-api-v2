@@ -44,8 +44,6 @@ class Utils {
             }
 
             $returnArray = [
-//                'status' => 200,
-//                'message' => 'Token correcto',
                 'id' => isset($payload->id) ? $payload->id : 0,
                 'username' => isset($payload->username) ? $payload->username : '',
                 'unique_hash' => isset($payload->unique_hash) ? $payload->unique_hash : '',
@@ -75,34 +73,22 @@ class Utils {
 
         $width = 500;
         $height = 500;
-        $text_size = 10;
+        $text_size = 250;
 
         $image = imagecreate($width, $height);
 
-        $red = rand(50, 200);
-        $green = rand(50, 200);
-        $blue = rand(50, 200);
+        imagecolorallocate($image, rand(50, 200), rand(50, 200), rand(50, 200));
 
-        imagecolorallocate($image, $red, $green, $blue);
+        $font = FONT_PATH . 'unispace bd.ttf';
 
-        $font = FONT_PATH . 'arial.ttf';
-
-        $textcolor = imagecolorallocate($image, 255, 255, 255);
+        $textcolor = imagecolorallocate($image, rand(230, 250), rand(230, 250), rand(230, 250));
 
         $bbox = imagettfbbox($text_size, 0, $font, strtoupper($character));
 
-        $lowerrightX = $bbox[2];
-        $upperrightX = $bbox[4];
-        $upperrightY = $bbox[5];
-        $upperleftY = $bbox[7];
+        $tx = $width / 2 - $bbox[2] / 2;
+        $ty = $width / 2 - $bbox[7] / 2;
 
-        $text_width = abs(max($lowerrightX, $upperrightX));
-        $text_height = abs(max($upperrightY, $upperleftY));
-
-        $centerW = $width / 2 - $text_width / 2;
-        $centerH = $height / 2 + $text_height / 2;
-
-        imagettftext($image, $text_size, 0, $centerW, $centerH, $textcolor, $font, strtoupper($character));
+        imagettftext($image, $text_size, 0, $tx, $ty, $textcolor, $font, strtoupper($character));
 
         imagepng($image, $path);
         imagedestroy($image);
@@ -110,7 +96,7 @@ class Utils {
         return $path;
     }
 
-    public static function resizeImage($avatar, $fn, $type, $width = 100, $height = 100) {
+    public static function resizeImage($avatar, $fn, $type, $width, $height) {
         switch ($type) {
             case 'bmp':
                 $img = imagecreatefromwbmp($avatar);
@@ -156,21 +142,7 @@ class Utils {
 
         imagecopyresampled($rimg, $img, 0, 0, $xo_ini, $yo_ini, $width, $height, $xo, $yo);
 
-        switch ($type) {
-            case 'bmp':
-                imagewbmp($rimg, "media/profile/{$fn}");
-                break;
-            case 'gif':
-                imagegif($rimg, "media/profile/{$fn}");
-                break;
-            case 'jpg':
-            case 'jpeg':
-                imagejpeg($rimg, "media/profile/{$fn}");
-                break;
-            case 'png':
-                imagepng($rimg, "media/profile/{$fn}");
-                break;
-        }
+        imagepng($rimg, "media/profile/{$fn}");
 
         imagedestroy($img);
         imagedestroy($rimg);
