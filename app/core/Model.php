@@ -4,7 +4,7 @@ namespace app\core;
 
 class Model {
 
-    public $db;
+    public ?Database $db;
 
     public function __construct() {
         $this->db = new Database();
@@ -15,11 +15,7 @@ class Model {
     }
 
     protected function getName($record) {
-        if (empty($record['name']) && empty($record['last_name'])) {
-            return $record['username'];
-        } else {
-            return trim("{$record['name']} {$record['last_name']}");
-        }
+        return empty($record['name']) ? $record['username'] : trim($record['name']);
     }
 
 }

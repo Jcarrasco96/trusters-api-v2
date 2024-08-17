@@ -10,40 +10,43 @@ use app\core\Validators;
 use app\models\User;
 use Exception;
 
-class AuthController extends Controller {
+class AuthController extends Controller
+{
 
-    public function login() {
+    /**
+     * @throws Exception
+     */
+    public function login(): array
+    {
         $model = new User();
 
         Validators::validateSet("Las credenciales son incorrectas", $this->dataJson, 'username', 'password');
 
-        $id = $model->findUserByCredentials($this->dataJson['username'], $this->dataJson['password']);
+        $data = $model->findUserByCredentials($this->dataJson['username'], $this->dataJson['password']);
 
-        if ($id != 0) {
-            $dbResult = $model->login($id);
-
-            $payloadArray = [
-                'id'          => $dbResult['id'],
-                'username'    => $dbResult['username'],
-                'unique_hash' => $dbResult['unique_hash'],
-            ];
-
-            $token = JWT::encode($payloadArray, App::$config['jwt']['serverkey']);
-
-            return [
-                'id'    => $dbResult['id'],
-                'auth'  => $dbResult['auth'],
-                'token' => $token,
-            ];
+        if (empty($data)) {
+            return ["status_code" => 400, "message" => 'Nombre de usuario o contraseña incorrectos'];
         }
 
+        $token = JWT::encode([
+            'id' => $data['id'],
+            'username' => $data['username'],
+            'auth' => $data['auth'],
+        ], App::$config['jwt']['serverkey']);
+
         return [
-            "status"  => 400,
-            "message" => 'Nombre de usuario o contraseña incorrectos',
+            'id' => $data['id'],
+            'username' => $data['username'],
+            'auth' => $data['auth'],
+            'token' => $token,
         ];
     }
 
-    public function register() {
+    /**
+     * @throws Exception
+     */
+    public function register(): array
+    {
         $model = new User();
 
         Validators::validateSet("Verifique los datos", $this->dataJson, "username", "password", "password2", "email");
@@ -56,31 +59,28 @@ class AuthController extends Controller {
         if ($dbResult == 1) {
             Utils::sendMail($this->dataJson['email'], "Cuenta creada correctamente.", "Bienvenido a nuestra comunidad {$this->dataJson['username']}\n\nEstamos encantados de que formes parte de nuestro grupo.\n\nSaludos.");
 
-            return [
-                "status"  => 201,
-                "message" => "Usuario registrado!"
-            ];
-        } elseif ($dbResult == -1) {
-            throw new Exception("Ya existe este usuario o los datos son incorrectos", 400);
-        } else {
-            throw new Exception("Error del servidor'", 500);
+            return ["status_code" => 201, "message" => "Usuario registrado!"];
         }
+
+        if ($dbResult == -1) {
+            throw new Exception("Ya existe este usuario o los datos son incorrectos", 400);
+        }
+
+        throw new Exception("Error del servidor'", 500);
     }
 
-    public function logout() {
-        $model = new User();
+    /**
+     * @throws Exception
+     */
+    public function logout(): array
+    {
         $token = Utils::token();
 
-        $update = $model->logout($token['id'], $token['username'], $token['unique_hash']);
-
-        if ($update) {
-            return [
-                'status'  => 200,
-                'message' => 'Logout'
-            ];
+        if (!empty($token)) {
+            return ['status_code' => 200, 'message' => 'Logout'];
         }
 
-        throw new Exception("No se desautentifico", 400);
+        throw new Exception("No se ha cerrado la sesión", 400);
     }
 
 }

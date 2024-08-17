@@ -1,21 +1,20 @@
 <?php
 
 return [
-    'name' => 'TRUSTERS API',
+    'name' => 'DOWNLOAD API',
     'jwt' => [
-        'serverkey' => '5f96af12e5224844b3241209fe61ff22',
+        'serverkey' => '5f96af1223224844b3246539fe61ff22',
     ],
     'origins' => [
         'http://localhost',
         'http://127.0.0.1',
-        'http://192.168.56.1',
-        'https://trusters.cmsagency.com.es',
+        'https://downloader.jcarrasco96.com',
     ],
     'db' => [
         'host' => 'localhost',
         'user' => 'root',
         'password' => '',
-        'dbname' => 'trusters',
+        'dbname' => 'test',
         'port' => '3306',
         'charset' => 'utf8',
     ],

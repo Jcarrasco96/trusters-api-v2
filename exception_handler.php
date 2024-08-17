@@ -1,9 +1,12 @@
 <?php
 
-function exception_handler($exception) {
-//    if ($_SERVER['SERVER_PROTOCOL'] == 'HTTP/1.1' && !headers_sent()) {
-//        header('HTTP/1.1 503 Service Unavailable');
-//    }
+use JetBrains\PhpStorm\NoReturn;
+
+#[NoReturn] function exception_handler($exception): void
+{
+    if ($_SERVER['SERVER_PROTOCOL'] == 'HTTP/1.1' && !headers_sent()) {
+        header('HTTP/1.1 503 Service Unavailable');
+    }
 
     http_response_code($exception->getCode());
 

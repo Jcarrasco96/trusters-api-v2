@@ -4,48 +4,50 @@ namespace app\core;
 
 use Exception;
 
-class App {
+class App
+{
 
-    public static $config = [];
+    public static array $config = [];
 
-    private $routes = [];
+    private array $routes = [];
 
-    public function __construct($config = []) {
+    public function __construct($config = [])
+    {
         self::$config = array_merge(self::$config, $config);
 
         define('ROOT', getcwd() . DIRECTORY_SEPARATOR);
         define('APP_PATH', ROOT . 'app' . DIRECTORY_SEPARATOR);
-        define('FONT_PATH', APP_PATH . 'fonts' . DIRECTORY_SEPARATOR);
     }
 
-    private function dispatch() {
-        if (!isset($_SERVER['PATH_INFO'])) {
+    /**
+     * @throws Exception
+     */
+    private function dispatch(): void
+    {
+        $path_info = $_SERVER['PATH_INFO'] ?? null;
+
+        if (!$path_info) {
             throw new Exception("Acción no permitida", 405);
         }
 
-        $path_info = trim($_SERVER['PATH_INFO'], '/');
-        $url = isset($path_info) ? explode('/', $path_info) : '/';
+        $path_info = trim($path_info, '/');
+        $url = explode('/', $path_info);
 
-        if ($url == '/') {
+        if (empty($url[0])) {
             throw new Exception("Acción no permitida", 405);
         }
 
         $method = strtolower($_SERVER['REQUEST_METHOD']);
+        $routes = $this->routes[$method] ?? null;
 
-        if (!isset($this->routes[$method])) {
-            throw new Exception("Metodo no permitido", 400);
+        if (!$routes) {
+            throw new Exception("Método no permitido", 400);
         }
 
-        foreach ($this->routes[$method] as $regex => $action) {
+        foreach ($routes as $regex => $action) {
             if (preg_match($regex, $path_info)) {
-                $requestedController = $url[0];
-                $requestedParams = array_slice($url, 1);
-                $requestedController = ucfirst($requestedController) . 'Controller';
-
-                $controller_name = 'app\\controllers\\' . $requestedController;
-                $controller = new $controller_name;
-                $controller->createAction($action, $requestedParams);
-
+                $controller_name = 'app\\controllers\\' . ucfirst(array_shift($url)) . 'Controller';
+                (new $controller_name)->createAction($action, $url);
                 exit;
             }
         }
@@ -53,7 +55,8 @@ class App {
         throw new Exception("No se econtró el recurso solicitado.", 404);
     }
 
-    public function run() {
+    public function run(): void
+    {
         try {
             self::dispatch();
         } catch (Exception $e) {
@@ -62,19 +65,23 @@ class App {
         }
     }
 
-    public function get($regex, $action) {
+    public function get($regex, $action): void
+    {
         $this->routes['get'][$regex] = $action;
     }
 
-    public function post($regex, $action) {
+    public function post($regex, $action): void
+    {
         $this->routes['post'][$regex] = $action;
     }
 
-    public function put($regex, $action) {
+    public function put($regex, $action): void
+    {
         $this->routes['put'][$regex] = $action;
     }
 
-    public function delete($regex, $action) {
+    public function delete($regex, $action): void
+    {
         $this->routes['delete'][$regex] = $action;
     }
 

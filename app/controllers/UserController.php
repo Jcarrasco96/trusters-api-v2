@@ -9,13 +9,18 @@ use app\core\Validators;
 use app\models\User;
 use Exception;
 
-class UserController extends Controller {
+class UserController extends Controller
+{
 
-    public function index() {
+    /**
+     * @throws Exception
+     */
+    public function index(): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        Validators::isAdmin($token['id'], $token['username'], $token['unique_hash']);
+        Validators::isAdmin($token['id'], $token['username']);
 
         $page_size = isset($_GET['page_size']) ? (int)$_GET['page_size'] : 20;
         $offset = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -30,169 +35,95 @@ class UserController extends Controller {
         ];
     }
 
-    public function current() {
+    /**
+     * @throws Exception
+     */
+    public function current(): array
+    {
         $model = new User();
         $db = new Database();
         $token = Utils::token();
 
-        $user = $model->find($token['id'], $token['username'], $token['unique_hash']);
+        $user = $model->find($token['id'], $token['username']);
 
         unset($user['password']);
-        unset($user['unique_hash']);
         unset($user['clef']);
 
-        $sqlCountPosts = sprintf('SELECT count(*) AS COUNT FROM post WHERE user_id = %u', $db->sql_escape($token['id']));
-        $sqlCountComments = sprintf('SELECT count(*) AS COUNT FROM post INNER JOIN comment ON post.id = comment.post_id AND post.user_id = %u', $db->sql_escape($token['id']));
+        $sqlCountPosts = sprintf('SELECT count(*) AS COUNT FROM download WHERE user_id = %u', $db->sql_escape($token['id']));
 
-        $user['posts'] = $db->count_query($sqlCountPosts);
-        $user['comments'] = $db->count_query($sqlCountComments);
+        $user['downloads'] = $db->count_query($sqlCountPosts);
 
         return $user;
     }
 
-    public function generateAvatar() {
-        //        $model = new User();
-        //        $token = Utils::token();
-
-        $characters = 'AOI';//'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        for ($i = 0; $i < strlen($characters); $i++) {
-            $path = Utils::generateAvatar($characters[$i]);
-        }
-
-        //        $type = 'png';
-        //        $avatar = Utils::generateRandomString();
-
-        $avatars = [
-            'o' => $path,
-            //            'r_100_100' => Utils::resizeImage($path, '{$avatar}_r_100_100.{$type}', $type),
-            //            'r_500_500' => Utils::resizeImage($path, '{$avatar}_r_500_500.{$type}', $type, 500, 500),
-        ];
-
-        // unlink($avatar_o);
-
-        // $model->setAvatar($avatars['r_100_100'], $token['id'], $token['username'], $token['unique_hash']);
-
-        return $avatars;
-    }
-
-    public function activate($id) {
+    /**
+     * @throws Exception
+     */
+    public function activate($id): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        Validators::isAdmin($token['id'], $token['username'], $token['unique_hash']);
+        Validators::isAdmin($token['id'], $token['username']);
 
         $rows = $model->activate($id);
 
         if ($rows == 1) {
-            return [
-                'status'  => 200,
-                'message' => 'Usuario activado'
-            ];
+            return ['status_code' => 200, 'message' => 'Usuario activado'];
         }
 
         throw new Exception('No se pudo activar el usuario, puede que ya se encuentre activo.', 400);
     }
 
-    public function desactivate($id) {
+    /**
+     * @throws Exception
+     */
+    public function desactivate($id): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        Validators::isAdmin($token['id'], $token['username'], $token['unique_hash']);
+        Validators::isAdmin($token['id'], $token['username']);
 
         $rows = $model->activate($id, false);
 
         if ($rows == 1) {
-            return [
-                'status'  => 200,
-                'message' => 'Usuario desactivado'
-            ];
+            return ['status_code' => 200, 'message' => 'Usuario desactivado'];
         }
 
         throw new Exception('No se pudo desactivar el usuario, puede que ya se encuentre inactivo.', 400);
     }
 
-    public function avatar() {
+    /**
+     * @throws Exception
+     */
+    public function changePassword(): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        if (!isset($_FILES['avatar'])) {
-            throw new Exception('Debe subir un archivo', 400);
-        }
-
-        $type = strtolower(substr(strrchr($_FILES['avatar']['type'], '/'), 1));
-        $avatar = Utils::generateRandomString(4) . '_' .  time();
-
-        $avatar_o = "media/{$avatar}.tmp.{$type}";
-
-        copy($_FILES['avatar']['tmp_name'], $avatar_o);
-
-        $avatars = [
-            'avatar' => Utils::resizeImage($avatar_o, "{$avatar}.png", $type, 100, 100),
-            'r500' => Utils::resizeImage($avatar_o, "{$avatar}_r500.png", $type, 500, 500),
-//            'r1000' => Utils::resizeImage($avatar_o, "{$avatar}_r1000.png", $type, 1000, 1000),
-        ];
-
-        unlink($avatar_o);
-
-        $model->deleteAvatar($token['id'], $token['username'], $token['unique_hash']);
-
-        $rows = $model->setAvatar($avatars['avatar'], $token['id'], $token['username'], $token['unique_hash']);
-
-        if ($rows == 1) {
-            return $avatars;
-        }
-
-        throw new Exception('No se pudo cambiar la foto de perfil.', 400);
-    }
-
-    public function wallet() {
-        $model = new User();
-        $token = Utils::token();
-
-        Validators::validateSet('Verifique los datos de la billetera electrónica.', $this->dataJson, 'ti_wallet');
-
-        $rows = $model->setWallet($this->dataJson['ti_wallet'], $token['id'], $token['username'], $token['unique_hash']);
-
-        if ($rows == 1) {
-            return [
-                'status' => 200,
-                'message' => 'Billetera electrónica modificada correctamente.'
-            ];
-        } elseif ($rows == 0) {
-            return [
-                'status' => 400,
-                'message' => 'Debe escoger otra billetera electrónica.'
-            ];
-        }
-
-        throw new Exception('No se pudo cambiar la billetera electrónica.', 400);
-    }
-
-    public function changePassword() {
-        $model = new User();
-        $token = Utils::token();
-
-        Validators::validateSet('Verifique los datos del afiliado tengan formato correcto', $this->dataJson, 'old_password', 'password', 'password2');
+        Validators::validateSet('Verifique que los datos del afiliado tengan un formato correcto', $this->dataJson, 'old_password', 'password', 'password2');
         Validators::validatePasswordMatch($this->dataJson['password'], $this->dataJson['password2']);
         Validators::validateNotEmpty($this->dataJson['old_password'], $this->dataJson['password'], $this->dataJson['password2']);
 
-        $rows = $model->changePassword($this->dataJson['old_password'], $this->dataJson['password'], $token['id'], $token['username'], $token['unique_hash']);
+        $rows = $model->changePassword($this->dataJson['old_password'], $this->dataJson['password'], $token['id'], $token['username']);
 
         if ($rows == 1) {
-            return [
-                'status' => 200,
-                'message' => 'Contraseña cambiada correctamente.'
-            ];
+            return ['status_code' => 200, 'message' => 'Contraseña cambiada correctamente.'];
         }
 
         throw new Exception('No se pudo cambiar la contraseña.', 400);
     }
 
-    public function setRole($id) {
+    /**
+     * @throws Exception
+     */
+    public function setRole($id): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        Validators::isAdmin($token['id'], $token['username'], $token['unique_hash']);
+        Validators::isAdmin($token['id'], $token['username']);
         Validators::validateSet('Error Processing Request', $this->dataJson, 'auth');
         Validators::validateIsNumeric($this->dataJson['auth']);
         Validators::validateRole($this->dataJson['auth']);
@@ -200,90 +131,82 @@ class UserController extends Controller {
         $rows = $model->setRole($id, $this->dataJson['auth']);
 
         if ($rows == 1) {
-            return [
-                'status'  => 200,
-                'message' => 'Role cambiado correctamente'
-            ];
+            return ['status_code' => 200, 'message' => 'Role cambiado correctamente'];
         }
 
         throw new Exception('No se pudo cambiar el rol a este usuario, puede que ya tenga este rol.', 400);
     }
 
-    public function sendCode() {
+    /**
+     * @throws Exception
+     */
+    public function sendCode(): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        $user = $model->find($token['id'], $token['username'], $token['unique_hash']);
+        $user = $model->find($token['id'], $token['username']);
 
         if (isset($user['is_verified']) && $user['is_verified']) {
-            return [
-                'status' => 200,
-                'message' => 'Este usuario ya ha sido verificado.',
-            ];
+            return ['status_code' => 200, 'message' => 'Este usuario ya ha sido verificado.',];
         }
 
-        $code = Utils::generateCode(6);
+        $code = Utils::code(6);
 
-        $sendCode = $model->sendCode($code, $token['id'], $token['username'], $token['unique_hash']);
+        $sendCode = $model->sendCode($code, $token['id'], $token['username']);
         $sendMail = Utils::sendMail($user['email'], 'Codigo de verificacion', sprintf("El codigo de verificacion del correo %s es <h1>%s</h1>", $user['email'], $code));
 
         if ($sendCode == 1 && $sendMail) {
-            return [
-                'status' => 200,
-                'message' => 'Codigo enviado a ' . $user['email'],
-            ];
+            return ['status_code' => 200, 'message' => 'Codigo enviado a ' . $user['email'],];
         }
 
         throw new Exception('No se pudo enviar el codigo de verificacion.', 400);
     }
 
-    public function verify() {
+    /**
+     * @throws Exception
+     */
+    public function verify(): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        $user = $model->find($token['id'], $token['username'], $token['unique_hash']);
+        $user = $model->find($token['id'], $token['username']);
 
         if (isset($user['is_verified']) && $user['is_verified']) {
-            return [
-                'status' => 200,
-                'message' => 'Este usuario ya ha sido verificado.',
-            ];
+            return ['status_code' => 200, 'message' => 'Este usuario ya ha sido verificado.',];
         }
 
         Validators::validateSet('Usuario no tiene un codigo de verificacion valido.', $user, 'clef');
 
-        $rows = $model->verify($user['clef'], $this->dataJson['code'], $token['id'], $token['username'], $token['unique_hash']);
+        $rows = $model->verify($user['clef'], $this->dataJson['code'], $token['id'], $token['username']);
 
         if ($rows == 1) {
-            return [
-                'status' => 200,
-                'message' => 'Usuario verificado correctamente.'
-            ];
+            return ['status_code' => 200, 'message' => 'Usuario verificado correctamente.'];
         }
 
         throw new Exception('El usuario no ha solicitado validar su cuenta.', 400);
     }
 
-    public function update() {
+    /**
+     * @throws Exception
+     */
+    public function update(): array
+    {
         $model = new User();
         $token = Utils::token();
 
-        Validators::validateSet('Verifique los datos del afiliado tengan formato correcto', $this->dataJson, 'name', 'last_name', 'email', 'phone', 'country', 'address', 'birthdate', 'ci', 'sex');
-        Validators::validateSex($this->dataJson['sex']);
+        Validators::validateSet('Verifique los datos del afiliado tengan formato correcto', $this->dataJson, 'name', 'email');
         Validators::validateEmail($this->dataJson['email']);
 
-        $rows = $model->update($this->dataJson['name'], $this->dataJson['last_name'], $this->dataJson['email'], $this->dataJson['phone'], $this->dataJson['country'], $this->dataJson['address'], $this->dataJson['birthdate'], $this->dataJson['ci'], $this->dataJson['sex'], $token['id'], $token['username'], $token['unique_hash']);
+        $rows = $model->update($this->dataJson['name'], $this->dataJson['email'], $token['id'], $token['username']);
 
         if ($rows == 1) {
-            return [
-                'status' => 200,
-                'message' => 'Perfil modificado correctamente'
-            ];
-        } elseif ($rows == 0) {
-            return [
-                'status' => 200,
-                'message' => 'No hay cambios de datos en el perfil'
-            ];
+            return ['status_code' => 200, 'message' => 'Perfil modificado correctamente'];
+        }
+
+        if ($rows == 0) {
+            return ['status_code' => 200, 'message' => 'No hay cambios de datos en el perfil'];
         }
 
         throw new Exception('Error en la base de datos', 500);

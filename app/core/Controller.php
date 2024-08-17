@@ -6,63 +6,63 @@ use Exception;
 use ReflectionException;
 use ReflectionMethod;
 
-class Controller {
+class Controller
+{
 
-    public $dataJson;
+    public mixed $dataJson;
 
-    public function __construct() {
-        $parameters = file_get_contents('php://input'); // Obtener parámetros de la petición
+    /**
+     * @throws Exception
+     */
+    public function __construct()
+    {
+        if ($parameters = file_get_contents('php://input')) {
+            $this->dataJson = json_decode($parameters, true);
 
-        if ($parameters) {
-            $dParams = json_decode($parameters, true);
-
-            if (json_last_error() != JSON_ERROR_NONE) { // Controlar posible error de parsing JSON
-                throw new Exception("Error interno en el servidor. Contacte al administrador con este codigo: JSON" . json_last_error(), 500);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception("Error interno en el servidor. Contacte al administrador con este código: JSON" . json_last_error(), 500);
             }
-
-            $this->dataJson = $dParams;
         }
     }
 
-    public function createAction($methodName, $params = []) {
+    /**
+     * @throws Exception
+     */
+    public function createAction($methodName, $params = []): array
+    {
         $methodNameNormalized = $this->normalizeAction($methodName);
 
         try {
             $method = new ReflectionMethod($this, $methodNameNormalized);
-            if ($method->isPublic() && $method->getName() === $methodNameNormalized) {
-                echo $this->render(call_user_func_array([$this, $methodNameNormalized], $params));
+            if ($method->isPublic()) {
+                echo $this->render($method->invokeArgs($this, $params));
             }
-            return [];
         } catch (ReflectionException $exception) {
             throw new Exception($exception->getMessage(), $exception->getCode());
         }
+
+        return [];
     }
 
-    private function render($params = []) {
-        if (isset($params["status"])) {
-            http_response_code($params["status"]);
+    /**
+     * @throws Exception
+     */
+    private function render($params = []): false|string
+    {
+        if (isset($params["status_code"])) {
+            http_response_code($params["status_code"]);
         }
 
         header('Content-Type: application/json; charset=utf8');
 
         $jsonResponse = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
 
-        if (json_last_error() != JSON_ERROR_NONE) {
-            throw new Exception("Error interno en el servidor. Contacte al administrador", 500);
-        }
-
-        return $jsonResponse;
+        return $jsonResponse !== false ? $jsonResponse : throw new Exception("Error interno en el servidor. Contacte al administrador", 500);
     }
 
-    private function normalizeAction($methodName) {
-        $actionParts = explode('-', $methodName);
-        $action = array_shift($actionParts);
-
-        foreach ($actionParts as $part) {
-            $action .= ucfirst($part);
-        }
-
-        return $action;
+    private function normalizeAction($methodName): ?string
+    {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('-', ' ', $methodName))));
     }
 
 }
